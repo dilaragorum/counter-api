@@ -28,12 +28,7 @@ func main() {
 	log.Println("Starting server on :4001")
 	err := http.ListenAndServe(":4001", router)
 	log.Fatal(err)
-
-	
-
 }
-
-
 
 func IncrementCount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -60,6 +55,7 @@ func DecrementCount(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method is not allowed", 405)
 		return
 	}
+
 	countEnteredByUser, _ := strconv.Atoi(r.URL.Query().Get("with"))
 	fmt.Fprintf(w, "count was: %d\n", count)
 	count = count - Count(countEnteredByUser)
@@ -76,12 +72,14 @@ func showCurrentCountWithId(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(r.URL.Query().Get("userId"))
 	if id <= 0 {
 		http.Error(w, "Please enter valid id ", 400)
+		return
 	}
 
 	count, ok := countWithId[id]
 
 	if ok == false {
 		http.Error(w, "User was not found", 404)
+		return
 	}
 
 	fmt.Fprintf(w, "user %d count is :  %d", id, count)
