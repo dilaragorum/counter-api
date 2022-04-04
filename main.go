@@ -7,20 +7,33 @@ import (
 	"strconv"
 )
 
+type Count int
+
+type MapIdToCount map[int]int
+var countWithId MapIdToCount
+
+var count Count = 0
+
 func main() {
+
+	countWithId = make(MapIdToCount)
+	countWithId[1] = 10
+	countWithId[2] = 20
+
 	router := http.NewServeMux()
 	router.HandleFunc("/increment", IncrementCount)
 	router.HandleFunc("/decrement", DecrementCount)
-	router.HandleFunc("/current", showCurrentCount)
+	router.HandleFunc("/current", showCurrentCountWithId)
 
 	log.Println("Starting server on :4001")
 	err := http.ListenAndServe(":4001", router)
 	log.Fatal(err)
+
+	
+
 }
 
-type Count int
 
-var count Count = 0
 
 func IncrementCount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -53,12 +66,23 @@ func DecrementCount(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "count is : %d", count)
 }
 
-func showCurrentCount(w http.ResponseWriter, r *http.Request) {
+func showCurrentCountWithId(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		w.Header().Set("Allow", "GET")
 		http.Error(w, "method is not allowed", 405)
 		return 
 	}
-	
-	fmt.Fprintf(w, "current count was: %d", count)
+
+	id, _ := strconv.Atoi(r.URL.Query().Get("userId"))
+	if id <= 0 {
+		http.Error(w, "Please enter valid id ", 400)
+	}
+
+	count, ok := countWithId[id]
+
+	if ok == false {
+		http.Error(w, "User was not found", 404)
+	}
+
+	fmt.Fprintf(w, "user %d count is :  %d", id, count)
 }
