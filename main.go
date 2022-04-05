@@ -7,16 +7,12 @@ import (
 	"strconv"
 )
 
-type Count int
+var countWithId map[int]int
 
-type MapIdToCount map[int]int
-var countWithId MapIdToCount
-
-var count Count = 0
+var count int = 0
 
 func main() {
 
-	countWithId = make(MapIdToCount)
 	countWithId[1] = 10
 	countWithId[2] = 20
 
@@ -27,58 +23,60 @@ func main() {
 
 	log.Println("Starting server on :4001")
 	err := http.ListenAndServe(":4001", router)
-	log.Fatal(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func IncrementCount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.Header().Set("Allow", "POST")
-		http.Error(w, "method is not allowed", 405)
-		return 
+		http.Error(w, "method is not allowed", http.StatusMethodNotAllowed)
+		return
 	}
 
 	countEnteredByUser, _ := strconv.Atoi(r.URL.Query().Get("with"))
-	
+
 	if countEnteredByUser <= 0 {
-		http.Error(w, "Please enter positive number", 400)
+		http.Error(w, "Please enter positive number", http.StatusBadRequest)
 		return
 	}
 
 	fmt.Fprintf(w, "count was: %d\n", count)
-	count = count + Count(countEnteredByUser)
+	count = count + countEnteredByUser
 	fmt.Fprintf(w, "count is : %d", count)
 }
 
 func DecrementCount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.Header().Set("Allow", "POST")
-		http.Error(w, "method is not allowed", 405)
+		http.Error(w, "method is not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	countEnteredByUser, _ := strconv.Atoi(r.URL.Query().Get("with"))
 	fmt.Fprintf(w, "count was: %d\n", count)
-	count = count - Count(countEnteredByUser)
+	count = count - countEnteredByUser
 	fmt.Fprintf(w, "count is : %d", count)
 }
 
 func showCurrentCountWithId(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		w.Header().Set("Allow", "GET")
-		http.Error(w, "method is not allowed", 405)
-		return 
+		http.Error(w, "method is not allowed", http.StatusMethodNotAllowed)
+		return
 	}
 
 	id, _ := strconv.Atoi(r.URL.Query().Get("userId"))
 	if id <= 0 {
-		http.Error(w, "Please enter valid id ", 400)
+		http.Error(w, "Please enter valid id ", http.StatusBadRequest)
 		return
 	}
 
 	count, ok := countWithId[id]
 
-	if ok == false {
-		http.Error(w, "User was not found", 404)
+	if !ok {
+		http.Error(w, "User was not found", http.StatusNotFound)
 		return
 	}
 
